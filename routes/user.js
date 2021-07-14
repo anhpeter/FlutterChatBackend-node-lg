@@ -11,78 +11,71 @@ router.get('/all', async(req, res) => {
         res.json(result);
     }).catch(err => {
         MyResponse.error(res, err);
-    })
-})
+    });
+});
+
+router.get('/listUserWithParams', async(req, res) => {
+    MainModel.listUserWithParams(req.query).then(result => {
+        res.json(result);
+    }).catch(err => {
+        MyResponse.error(res, err);
+    });
+});
 
 router.post('/getUsersByIds', (req, res, next) => {
     const { ids } = req.body;
     MainModel.findUsersByIds(ids)
         .then(docs => {
-            if (docs.length > 0)
-                MyResponse.success(res, docs);
-            else
-                MyResponse.fail(res);
+            MyResponse.success(res, docs);
         }).catch(err => {
             MyResponse.error(res, err);
         });
-})
+});
 
 router.post('/getUserByUsernameAndPassword', (req, res, next) => {
     const { username, password } = req.body;
     MainModel.findByUsernameAndPassword(username, password)
         .then(doc => {
-            if (doc)
-                MyResponse.success(res, docs);
-            else
-                MyResponse.fail(res);
+            MyResponse.success(res, docs);
         }).catch(err => {
             MyResponse.error(res, err);
         });
-})
+});
 
 router.get('/getUserByUsername', (req, res, next) => {
     const { username } = req.query;
     MainModel.findByUsername(username)
         .then(doc => {
-            if (doc)
-                MyResponse.success(res, docs);
-            else
-                MyResponse.fail(res);
+            MyResponse.success(res, docs);
         }).catch(err => {
             MyResponse.error(res, err);
         });
-})
+});
 
 router.post('/getReceivers', (req, res, next) => {
     let { username, exceptIds = [] } = req.body;
     exceptIds = exceptIds || [];
     MainModel.findReceivers(username, exceptIds)
         .then(docs => {
-            if (docs.length > 0)
-                MyResponse.success(res, docs);
-            else
-                MyResponse.fail(res);
+            MyResponse.success(res, docs);
         }).catch(err => {
             MyResponse.error(res, err);
         });
-})
+});
 
 // CREATE
 router.post('/createAccount', (req, res, next) => {
     const { username, password } = req.body;
     MainModel.insert({ username, password })
         .then(doc => {
-            if (doc)
-                MyResponse.success(res, docs);
-            else
-                MyResponse.fail(res);
+            MyResponse.success(res, docs);
         }).catch(err => {
             MyResponse.error(res, err);
         });
-})
+});
 
 // RUN ACTION
-router.get('/runAction', (req, res) => {})
+router.get('/runAction', (req, res) => {});
 
 // RESET 
 router.get('/reset', (req, res) => {
@@ -91,8 +84,8 @@ router.get('/reset', (req, res) => {
             MyResponse.success(res, result);
         }).catch(err => {
             MyResponse.error(res, err);
-        })
-})
+        });
+});
 module.exports = router;
 
 // FRIEND ACTIONS

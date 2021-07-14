@@ -1,18 +1,37 @@
-const mongoose = require('mongoose');
+const dummyUsers = require('../dummy_data/dummy_users');
 const model = require('../schemas/user');
+const { convertStringToMongooseObjectId } = require('./Model');
 const Model = require('./Model');
 const userModel = {
     ...Model,
 
     listAll: function() {
-        return this.getModel().find({});
+        return this.getModel().find();
+    },
+
+    listUserWithParams: function(query) {
+        const {skip = 0, limit = 50} = query;
+        const queryObj = [
+            {
+                $skip: skip
+            },
+            {
+                $limit: limit
+            },
+            {
+                $sort: {
+                    last_active: -1
+                }
+            },
+        ];
+        return this.getModel().aggregate(queryObj);
     },
 
     // FIND
     findUsersByIds: function(ids) {
         ids = ids.map((id) => {
-            return new mongoose.Types.ObjectId(id);
-        })
+            return this.convertStringToMongooseObjectId(id);
+        });
         return this.getModel().find({
             _id: {
                 $in: ids
@@ -26,6 +45,68 @@ const userModel = {
 
     findByUsernameAndPassword: function(username, password) {
         return this.getModel().findOne({ username, password });
+    },
+
+    // INSERT 
+    insert: function(object) {
+        const item = new this.getModel()(object);
+        return item.save();
+    },
+
+    // UPDATE
+    updateLastActiveById: function(id){
+        return this.getModel().updateOne({_id: convertStringToMongooseObjectId(id)}, {
+            $set: {
+                last_active: Date.now(),
+            }
+        });
+    },
+
+    // OTHER
+    reset: async function() {
+        await this.getModel().deleteMany();
+        //return this.getModel().insertMany(this.getInitialData());
+        return this.getModel().insertMany(dummyUsers);
+    },
+
+    getInitialData: function() {
+        const items = [{
+            username: 'peteranh',
+            password: 'admin',
+            avatar_url: 'https://scontent.fpnh22-3.fna.fbcdn.net/v/t1.6435-9/204065591_1762191777316711_7730942647747491134_n.jpg?_nc_cat=105&ccb=1-3&_nc_sid=09cbfe&_nc_ohc=xLfB-T3CGAwAX8udkbR&_nc_ht=scontent.fpnh22-3.fna&oh=60059069bb86d74b021d9612e9d8c6ed&oe=60EECC6D', 
+
+        },
+        {
+            username: 'peterkhang',
+            password: 'admin',
+            avatar_url: 'https://scontent.fpnh22-2.fna.fbcdn.net/v/t1.6435-9/167493141_1912654948911952_7955682796671963256_n.jpg?_nc_cat=101&ccb=1-3&_nc_sid=09cbfe&_nc_ohc=mLkniF3-XRIAX9IvkoI&tn=tVTkhA5WDqz-Q1eV&_nc_ht=scontent.fpnh22-2.fna&oh=1cd66fc61277ae7487ad0e7a80671e08&oe=60EDECBC', 
+        },
+        {
+            username: 'rose',
+            password: 'admin',
+            avatar_url: 'https://i.pinimg.com/originals/76/fa/eb/76faeb9c818efdf76cf066aea3685a80.jpg', 
+        },
+        {
+            username: 'lisa',
+            password: 'admin',
+            avatar_url: 'https://assets.vogue.com/photos/5ebc71d4a85f0288b7c3efda/16:9/w_3376,h_1899,c_limit/lisa-promo-crop.jpg', 
+        },
+        {
+            username: 'jisoo',
+            password: 'admin',
+            avatar_url: 'https://upload.wikimedia.org/wikipedia/commons/3/38/Kim_Ji-soo_at_Jimmy_Choo_Event_on_January_09%2C_2020_%287%29.jpg', 
+        },
+        {
+            username: 'jennie',
+            password: 'admin',
+            avatar_url: 'https://cdn1.i-scmp.com/sites/default/files/styles/768x768/public/images/methode/2019/01/16/07a7ab2a-17ce-11e9-8ff8-c80f5203e5c9_image_hires_160333.jpg?itok=SYxUEfvx&v=1547625814', 
+        },
+        ];
+        return items;
+    },
+
+    getModel: function() {
+        return model;
     },
 
     //findStrangerByUsername(username, callback) {
@@ -157,57 +238,6 @@ const userModel = {
     //})
     //},
 
-    // INSERT 
-    insert: function(object) {
-        const item = new this.getModel()(object);
-        return item.save();
-    },
-
-    // OTHER
-    reset: async function() {
-        await this.getModel().deleteMany();
-        return this.getModel().insertMany(this.getInitialData());
-    },
-
-    getInitialData: function() {
-        const items = [{
-                username: 'peteranh',
-                password: 'admin',
-                avatar: { thumb: 'https://scontent.fsgn2-5.fna.fbcdn.net/v/t1.0-9/61103469_1109770422558853_2564158225184194560_n.jpg?_nc_cat=104&ccb=2&_nc_sid=09cbfe&_nc_ohc=BJ6L5IV_JfQAX8iDLtk&_nc_ht=scontent.fsgn2-5.fna&oh=ccf7880a2a77ee48a2fdf6663f3050c0&oe=6049EB1D', },
-
-            },
-            {
-                username: 'peterkhang',
-                password: 'admin',
-                avatar: { thumb: 'https://scontent.fsgn2-3.fna.fbcdn.net/v/t1.0-9/137561041_1853205284856919_7590474778452561765_o.jpg?_nc_cat=108&ccb=2&_nc_sid=09cbfe&_nc_ohc=Wh8AsYFtNE8AX8ZUxrZ&_nc_ht=scontent.fsgn2-3.fna&oh=5fd70fba323c9d72da5caa2ebd1e00ef&oe=604836B2', },
-            },
-            {
-                username: 'rose',
-                password: 'admin',
-                avatar: { thumb: 'https://i.pinimg.com/originals/76/fa/eb/76faeb9c818efdf76cf066aea3685a80.jpg', },
-            },
-            {
-                username: 'lisa',
-                password: 'admin',
-                avatar: { thumb: "https://assets.vogue.com/photos/5ebc71d4a85f0288b7c3efda/16:9/w_3376,h_1899,c_limit/lisa-promo-crop.jpg" },
-            },
-            {
-                username: 'jisoo',
-                password: 'admin',
-                avatar: { thumb: "https://upload.wikimedia.org/wikipedia/commons/3/38/Kim_Ji-soo_at_Jimmy_Choo_Event_on_January_09%2C_2020_%287%29.jpg" },
-            },
-            {
-                username: 'jennie',
-                password: 'admin',
-                avatar: { thumb: "https://cdn1.i-scmp.com/sites/default/files/styles/768x768/public/images/methode/2019/01/16/07a7ab2a-17ce-11e9-8ff8-c80f5203e5c9_image_hires_160333.jpg?itok=SYxUEfvx&v=1547625814" },
-            },
-        ];
-        return items;
-    },
-
-    getModel: function() {
-        return model;
-    },
 
     //unfriendById: function(id, friendId, callback) {
     //let promises = [];
@@ -369,5 +399,5 @@ const userModel = {
     //if (Helper.isFn(callback)) callback(result.err, result.result);
     //})
     //}
-}
+};
 module.exports = userModel;

@@ -1,5 +1,10 @@
 const Helper = require("../defines/Helper");
 
+//const user = {
+//socketIds: [String] 
+//...user
+//}
+
 const onlineUsers = {
     users: {},
 

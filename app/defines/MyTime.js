@@ -1,12 +1,13 @@
-const dateformat = require('dateformat')
+const dateformat = require('dateformat');
 const MyTime = {
 
     getUTCNow: function () {
         var now = new Date();
-        var time = now.getTime();
-        var offset = now.getTimezoneOffset();
-        offset = offset * 60000;
-        return time - offset;
+        //var time = now.getTime();
+        //var offset = now.getTimezoneOffset();
+        //offset = offset * 60000;
+        //return time - offset;
+        return now.getTime();
     },
 
     getCurrentTimeByUTCTime: function (utcTime) {
@@ -19,7 +20,7 @@ const MyTime = {
     getMessageTimeString: function (time) {
         let itemDate = new Date(time);
         let now = new Date();
-        let result
+        let result;
         if (
             (
                 now.getFullYear() === itemDate.getFullYear() &&
@@ -33,5 +34,5 @@ const MyTime = {
             result = dateformat(time, 'dd/mm/yyyy HH:MM');
         return result;
     },
-}
+};
 module.exports = MyTime;

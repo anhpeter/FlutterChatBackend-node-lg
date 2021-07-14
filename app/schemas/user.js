@@ -7,9 +7,10 @@ const schema = new mongoose.Schema({
     email: String,
     phone: String,
     password: String,
-    created: mongooseTypes.historyType,
-    avatar: mongooseTypes.avatarType,
-    lastActive: Number,
+    created: Number,
+    modified: Number,
+    avatar_url: String,
+    last_active: Number,
 });
 
 const model = mongoose.model('users', schema);

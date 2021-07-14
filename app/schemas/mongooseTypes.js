@@ -10,26 +10,26 @@ const mongooseTypes = {
             _id: this.idType,
             username: String,
             fullname: String,
-            avatar: this.avatarType,
-        }
+            avatar_url: String,
+        };
     },
     get historyType() {
         return {
             by: this.idType,
             timestamp: Number,
-        }
+        };
     },
     get messageType() {
         return {
             _id: this.idType,
-            sender_id: this.shortUserType,
+            sender: this.shortUserType,
             message_reply_id: this.idType,
             text: String,
             message_type: String,
             attach_url: String,
             timestamp: Number,
-        }
+        };
     }
-}
+};
 
 module.exports = mongooseTypes;

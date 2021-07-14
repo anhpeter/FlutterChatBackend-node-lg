@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const model = require('../schemas/chat');
 const Model = require('./Model');
 const MyTime = require('../defines/MyTime');
+const userModel = require('./user');
+const dummyChats = require('../dummy_data/dummy_chats');
+
 const chatModel = {
     ...Model,
 
@@ -14,39 +17,30 @@ const chatModel = {
         return this.getModel().find({
             members: new mongoose.Types.ObjectId(id),
         }, {}, {
-            select: "_id"
+            select: '_id'
         });
     },
 
     // find
     findInfoByUserIdsOrCreateIfNotExist: async function(ids) {
-        try {
-            const result = await this.getModel().findOne({
-                members: this.getMemberIdsMatch(ids),
-            }, {
-                _id: 1,
-                members: 1,
-            }, (err, result) => {});
-
-            if (result != null) return result;
-
-            // not found
-            const item = {
-                members: ids,
-                created: MyTime.getUTCNow(),
-            }
-            return this.insert(item)
-        } catch (e) {
-            console.log("insert err", e);
+        let result = await this.findByMemberIds(ids);
+        if (result == null){
+            result = await this.createChatByMemberIds(ids);
         }
+
+        // not found
+        return {
+            ...result.toObject(),
+            members: await userModel.findUsersByIds(result.members),
+        };
     },
 
     createChatByMemberIds: function(ids, message) {
         const item = {
             members: ids,
             messages: [],
-            created: MyTime.getUTCNow(),
-        }
+            created: Date.now(),
+        };
         if (message) {
             item.messages.push(message);
             item.lastMessage = message;
@@ -67,8 +61,26 @@ const chatModel = {
         });
     },
 
-    findById: function(id) {
-        return this.getModel().findOne({ _id: id });
+    findById: async function(id) {
+        const result = await this.getModel().findOne({ _id: id });
+        return {
+            ...result.toObject(),
+            members: await userModel.findUsersByIds(result.members),
+        };
+    },
+
+    getBriefItemById: function(id) {
+        return this.getModel().aggregate([{
+            $match: {
+                _id: new mongoose.Types.ObjectId(id),
+                last_message: {
+                    $exists: true
+                }
+            }
+        },
+        this.getMembersLookup(),
+        this.getSidebarItemProjection(),
+        ]);
     },
 
     findByMemberIds: function(ids) {
@@ -79,34 +91,34 @@ const chatModel = {
 
     findSidebarItemById: function(id) {
         return this.getModel().aggregate([{
-                $match: {
-                    _id: new mongoose.Types.ObjectId(id)
-                }
-            },
-            this.getMembersLookup(),
-            this.getSidebarItemProjection(),
-            {
-                $limit: 1,
+            $match: {
+                _id: new mongoose.Types.ObjectId(id)
             }
+        },
+        this.getMembersLookup(),
+        this.getSidebarItemProjection(),
+        {
+            $limit: 1,
+        }
         ]);
     },
 
     listItemsForListDisplay: function(id) {
         return this.getModel().aggregate([{
-                $match: {
-                    members: new mongoose.Types.ObjectId(id),
-                    lastMessage: {
-                        $exists: true
-                    }
-                }
-            },
-            this.getMembersLookup(),
-            this.getSidebarItemProjection(),
-            {
-                $sort: {
-                    'lastMessage.time': -1
+            $match: {
+                members: new mongoose.Types.ObjectId(id),
+                last_message: {
+                    $exists: true
                 }
             }
+        },
+        this.getMembersLookup(),
+        this.getSidebarItemProjection(),
+        {
+            $sort: {
+                'last_message.timestamp': -1
+            }
+        }
         ]);
     },
 
@@ -121,11 +133,11 @@ const chatModel = {
         return this.getModel().findOneAndUpdate({
             _id: id,
         }, {
-            lastMessage: message,
+            last_message: message,
             $push: { messages: message }
         }, {
             select: 'members',
-        })
+        });
     },
 
     getModel: function() {
@@ -138,33 +150,34 @@ const chatModel = {
         return {
             $size: ids.length,
             $all: ids,
-        }
+        };
     },
 
     getMembersLookup: function() {
         return {
             $lookup: {
-                from: "users",
-                let: { the_members: "$members", },
+                from: 'users',
+                let: { the_members: '$members', },
                 pipeline: [{
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    { $in: ["$_id", "$$the_members"] }
-                                ]
-                            }
-                        },
-                    },
-                    {
-                        $project: {
-                            username: 1,
-                            picture: 1,
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $in: ['$_id', '$$the_members'] }
+                            ]
                         }
+                    },
+                },
+                {
+                    $project: {
+                        username: 1,
+                        fullname: 1,
+                        avatar_url: 1,
                     }
+                }
                 ],
-                as: "members"
+                as: 'members'
             },
-        }
+        };
     },
 
     getSidebarItemProjection: function() {
@@ -172,15 +185,16 @@ const chatModel = {
             $project: {
                 name: 1,
                 members: 1,
-                lastMessage: 1,
+                last_message: 1,
             }
-        }
+        };
     },
 
     // 
     reset: async function(callback) {
         await this.getModel().deleteMany({});
+        return this.getModel().insertMany(dummyChats);
     }
 
-}
+};
 module.exports = chatModel;

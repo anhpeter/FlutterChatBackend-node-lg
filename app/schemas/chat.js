@@ -3,11 +3,11 @@ const mongooseTypes = require('./mongooseTypes');
 
 const schema = new mongoose.Schema({
     name: String,
-    members: [mongooseTypes.shortUserType],
+    members: [mongooseTypes.idType],
     messages: [mongooseTypes.messageType],
-    lastMessage: mongooseTypes.messageType,
-    created: mongooseTypes.historyType,
-    modified: mongooseTypes.historyType,
+    last_message: mongooseTypes.messageType,
+    created: Number,
+    modified: Number,
 });
 const model = mongoose.model('chats', schema);
 module.exports = model;

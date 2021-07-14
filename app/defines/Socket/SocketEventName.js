@@ -24,6 +24,6 @@ const SocketEventName = {
     friendAccepted: 'friend-accepted',
     friendRequested: 'friend-requested',
     friendUnfriend: 'friend-unfriend',
-}
+};
 
 module.exports = SocketEventName;
