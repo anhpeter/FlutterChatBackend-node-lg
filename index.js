@@ -7,6 +7,18 @@ const socketIO = require('socket.io');
 const mongoose = require('mongoose');
 const realtime = require('./app/Socket/realtime');
 const AppConfig = require('./app/defines/app_config');
+var admin = require('firebase-admin');
+var serviceAccount = require('./serviceAccountKey.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+app.set('admin', admin);
+app.use(function(req, res, next) {
+    req.admin = admin;
+    next();
+});
+
 
 app.use(bodyParser.json());
 app.use(cors());

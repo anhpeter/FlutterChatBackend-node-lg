@@ -42,6 +42,16 @@ router.post('/getUserByUsernameAndPassword', (req, res, next) => {
         });
 });
 
+router.get('/getUserByUid', (req, res, next) => {
+    const {uid} = req.query;
+    MainModel.findByUid(uid)
+        .then(doc => {
+            MyResponse.success(res, doc);
+        }).catch(err => {
+            MyResponse.error(res, err);
+        });
+});
+
 router.get('/getUserByUsername', (req, res, next) => {
     const { username } = req.query;
     MainModel.findByUsername(username)
@@ -64,12 +74,22 @@ router.post('/getReceivers', (req, res, next) => {
 });
 
 // CREATE
-router.post('/createAccount', (req, res, next) => {
-    const { username, password } = req.body;
-    MainModel.insert({ username, password })
+router.post('/createNewUser', (req, res, next) => {
+    const { username, email, password, uid } = req.body;
+    MainModel.createNewAccount({ username, email, password, uid })
         .then(doc => {
-            MyResponse.success(res, docs);
+            MyResponse.success(res, doc);
         }).catch(err => {
+            MyResponse.error(res, err);
+        });
+});
+
+router.post('/getOrCreateUserIfNotExist', (req, res, next) => {
+    MainModel.getOrCreateUserIfNotExist(req.body)
+        .then(doc => {
+            MyResponse.success(res, doc);
+        }).catch(err => {
+            console.log(err);
             MyResponse.error(res, err);
         });
 });
@@ -79,13 +99,15 @@ router.get('/runAction', (req, res) => {});
 
 // RESET 
 router.get('/reset', (req, res) => {
-    MainModel.reset()
+    MainModel.reset(req.admin)
         .then(result => {
             MyResponse.success(res, result);
         }).catch(err => {
+            console.log(err);
             MyResponse.error(res, err);
         });
 });
+
 module.exports = router;
 
 // FRIEND ACTIONS

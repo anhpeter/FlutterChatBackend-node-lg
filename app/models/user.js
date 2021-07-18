@@ -47,10 +47,32 @@ const userModel = {
         return this.getModel().findOne({ username, password });
     },
 
+    findByUid: function(uid) {
+        return this.getModel().findOne({uid});
+    },
+
     // INSERT 
     insert: function(object) {
         const item = new this.getModel()(object);
         return item.save();
+    },
+
+    createNewAccount: function(item){
+        const {email, password, uid, avatar_url, fullname, username} = item;
+        item = {
+            username, email, password, uid, avatar_url,fullname,
+            created: Date.now(),
+            last_active: Date.now(),
+        };
+        return this.insert(item);
+    },
+
+    getOrCreateUserIfNotExist: async function(item){
+        const {uid} = item;
+        const existingItem = await this.getModel().findOne({uid});
+        if (existingItem) 
+            return existingItem;
+        return this.createNewAccount(item);
     },
 
     // UPDATE
@@ -63,10 +85,46 @@ const userModel = {
     },
 
     // OTHER
-    reset: async function() {
+    reset: async function(admin) {
+        const deleteResult = await this.deleteAuthUsers(admin);
         await this.getModel().deleteMany();
-        //return this.getModel().insertMany(this.getInitialData());
-        return this.getModel().insertMany(dummyUsers);
+        const promises = [];
+
+        // add user
+        dummyUsers.forEach(item=>{
+            const promise = new Promise((resolve)=>{
+                admin
+                    .auth()
+                    .createUser({
+                        email:item.email,
+                        password:item.password,
+                    })
+                    .then((userRecord) => {
+                        resolve({
+                            ...item,
+                            uid: userRecord.uid
+                        });
+                    });
+            });
+            promises.push(promise);
+        });
+        const data = await Promise.all(promises);
+        return this.getModel().insertMany(data);
+    },
+
+    deleteAuthUsers: async function(admin){
+        return admin
+            .auth()
+            .listUsers(1000)
+            .then((listUsersResult) => {
+                const uids = [];
+                listUsersResult.users.forEach((userRecord) => {
+                    uids.push(userRecord.uid);
+                });
+                return admin
+                    .auth()
+                    .deleteUsers(uids);
+            });
     },
 
     getInitialData: function() {

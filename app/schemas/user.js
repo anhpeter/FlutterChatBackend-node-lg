@@ -3,6 +3,7 @@ const mongooseTypes = require('./mongooseTypes');
 
 const schema = new mongoose.Schema({
     username: String,
+    uid: String,
     fullname: String,
     email: String,
     phone: String,
